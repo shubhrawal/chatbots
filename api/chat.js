@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Anthropic = require('@anthropic-ai/sdk');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const conversationHistory = {};
 
@@ -235,13 +235,9 @@ Dwell on problem-saturated narratives
 Ask "why" questions
 Impose your own goals or meanings
 
-Do not use the same intervention type in two consecutive turns. After a future-focused question, move to an exception question, scaling question, or strengths-based reflection.
-
-Important:
-Write up to 5 complete sentences.
-Do not use numbered or bulleted lists.
-Ask at most one question, only if necessary.
-`,
+*(Keep these consistent across all therapy bots unless style-justified)*
+STRICT: Keep every response to 2-4 sentences total. Always end with exactly one follow-up question to continue the conversation. Never exceed 4 sentences under any circumstances.
+Language: Plain, human, non-clinical${SAFETY_INSTRUCTION}`,
   },
 };
 
@@ -302,30 +298,21 @@ module.exports = async (req, res) => {
     });
 
     const systemInstruction = PERSONALITIES[personality].systemPrompt;
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: systemInstruction,
-    });
-
     const sessionMessages = conversationHistory[sessionId].messages;
-    const history = sessionMessages
-      .slice(0, -1)
-      .map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }],
-      }));
 
-    const chat = model.startChat({
-      history,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1000,
-      },
+    const claudeMessages = sessionMessages.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content,
+    }));
+
+    const result = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system: systemInstruction,
+      messages: claudeMessages,
     });
 
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const aiResponse = response.text();
+    const aiResponse = result.content[0].text;
 
     conversationHistory[sessionId].messages.push({
       role: 'assistant',
@@ -346,13 +333,13 @@ module.exports = async (req, res) => {
       return res.status(429).json({ error: 'Rate limit exceeded', details: 'You have exceeded the API quota. Please wait a few minutes or try again later.' });
     }
     if (status === 400) {
-      return res.status(400).json({ error: 'Invalid request to Gemini API', details: error.message || 'The request format was invalid.' });
+      return res.status(400).json({ error: 'Invalid request to Claude API', details: error.message || 'The request format was invalid.' });
     }
     if (status === 401 || status === 403) {
-      return res.status(401).json({ error: 'Authentication failed', details: 'Your Gemini API key may be invalid or expired.' });
+      return res.status(401).json({ error: 'Authentication failed', details: 'Your Claude API key may be invalid or expired.' });
     }
     if (status === 404) {
-      return res.status(404).json({ error: 'Model not found', details: 'The Gemini model is not available.' });
+      return res.status(404).json({ error: 'Model not found', details: 'The Claude model is not available.' });
     }
 
     return res.status(status || 500).json({
