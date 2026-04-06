@@ -1,0 +1,163 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.chat-container {
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+}
+
+.chat-box {
+  background: #fff;
+}
+
+.personality-label {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 13px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Fullscreen chat layout */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+.App {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* fill viewport */
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.chat-box {
+  flex: 1 1 auto;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: #e6f0ff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 75%;
+}
+
+.message.bot {
+  align-self: flex-start;
+  background: #f3f3f3;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 75%;
+}
+
+/* Ensure message bubble text is left-aligned inside the bubble */
+.message {
+  text-align: left;
+  word-break: break-word;
+}
+
+.input-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.input-bar input[type="text"] {
+  flex: 1 1 auto;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.input-bar button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #2978f0;
+  color: white;
+}
+
+/* subtle caret/typing feel for streamed text */
+.bot-typing-cursor {
+  position: relative;
+}
+.bot-typing-cursor::after {
+  /* Use a small animated block as a caret instead of a unicode escape */
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: rgba(0,0,0,0.6);
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: blink 1s steps(2, start) infinite;
+  border-radius: 2px;
+}
+
+@keyframes blink {
+  to { visibility: hidden; }
+}
