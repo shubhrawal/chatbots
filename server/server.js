@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
@@ -19,6 +21,21 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // In-memory conversation history storage (indexed by sessionId)
 // Each session stores messages and metadata
 let conversationHistory = {};
+
+// Folder where transcript files get saved
+const TRANSCRIPTS_DIR = path.join(__dirname, 'transcripts');
+if (!fs.existsSync(TRANSCRIPTS_DIR)) {
+  fs.mkdirSync(TRANSCRIPTS_DIR);
+}
+
+// Writes the full conversation for a session to a .jsonl file (one message per line)
+function saveTranscript(sessionId) {
+  const filePath = path.join(TRANSCRIPTS_DIR, `${sessionId}.jsonl`);
+  const lines = conversationHistory[sessionId].messages
+    .map((msg) => JSON.stringify(msg))
+    .join('\n');
+  fs.writeFileSync(filePath, lines);
+}
 
 // Safety intervention — appended to every personality prompt
 const SAFETY_INSTRUCTION = `
@@ -338,6 +355,7 @@ app.post('/api/chat', async (req, res) => {
       content: message,
       timestamp: new Date().toISOString(),
     });
+    saveTranscript(sessionId);
 
     const systemInstruction = PERSONALITIES[personality].systemPrompt;
     const sessionMessages = conversationHistory[sessionId].messages;
@@ -371,6 +389,7 @@ app.post('/api/chat', async (req, res) => {
       content: aiResponse,
       timestamp: new Date().toISOString(),
     });
+    saveTranscript(sessionId);
 
     // Update session metadata
     conversationHistory[sessionId].lastActivity = new Date().toISOString();
